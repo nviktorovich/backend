@@ -32,10 +32,6 @@ var (
 	ErrServiceNotSet = errors.New("service not set")
 )
 
-//go:embed doc/swagger.json
-
-var spec []byte
-
 type Server struct {
 	router  *chi.Mux
 	service Service
