@@ -6,12 +6,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Crypto the main entity, containes info and cost by timestamp
+// Crypto the main entity, contain info and cost by timestamp
 type Crypto struct {
 	Title      string
 	ShortTitle string
 	Cost       float64
-	TimeStamp  time.Time
+	Created    time.Time
 }
 
 func NewCrypto(shortTitle string, cost float64) (*Crypto, error) {
@@ -31,6 +31,6 @@ func (crypto *Crypto) SetTitle(title string) {
 	crypto.Title = title
 }
 
-func (crypto *Crypto) SetTimeStamp(timestamp time.Time) {
-	crypto.TimeStamp = timestamp
+func (crypto *Crypto) SetTimeStamp(created time.Time) {
+	crypto.Created = created
 }

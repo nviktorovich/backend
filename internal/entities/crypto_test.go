@@ -52,5 +52,5 @@ func TestSetTitle(t *testing.T) {
 	cr.SetTitle("Ethereum")
 	require.Equal(t, "Ethereum", cr.Title)
 	cr.SetTimeStamp(now)
-	require.Equal(t, now, cr.TimeStamp)
+	require.Equal(t, now, cr.Created)
 }

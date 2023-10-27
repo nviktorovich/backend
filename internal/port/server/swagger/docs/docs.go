@@ -15,9 +15,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/getAvg": {
+        "/cryptos": {
             "get": {
-                "description": "avg rates known cryptos",
+                "description": "get data about all known cryptos frob db",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,29 +27,29 @@ const docTemplate = `{
                 "tags": [
                     "crypto"
                 ],
-                "summary": "avg rates known cryptos",
+                "summary": "all cryptos",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dto.Crypto"
+                                "$ref": "#/definitions/github_com_NViktorovich_cryptobackend_pkg_dto.Crypto"
                             }
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Error"
+                            "$ref": "#/definitions/github_com_NViktorovich_cryptobackend_pkg_dto.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/getLast": {
+        "/cryptos/{title}": {
             "get": {
-                "description": "last rates known cryptos",
+                "description": "get data about special crypto from db",
                 "consumes": [
                     "application/json"
                 ],
@@ -59,85 +59,33 @@ const docTemplate = `{
                 "tags": [
                     "crypto"
                 ],
-                "summary": "last rates known cryptos",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/dto.Crypto"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.Error"
-                        }
+                "summary": "special crypto",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "crypto title",
+                        "name": "title",
+                        "in": "path",
+                        "required": true
                     }
-                }
-            }
-        },
-        "/getMax": {
-            "get": {
-                "description": "max rates known cryptos",
-                "consumes": [
-                    "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "crypto"
-                ],
-                "summary": "max rates known cryptos",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/dto.Crypto"
-                            }
+                            "$ref": "#/definitions/github_com_NViktorovich_cryptobackend_pkg_dto.Crypto"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_NViktorovich_cryptobackend_pkg_dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/dto.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/getMin": {
-            "get": {
-                "description": "min rates known cryptos",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "crypto"
-                ],
-                "summary": "min rates known cryptos",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/dto.Crypto"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/dto.Error"
+                            "$ref": "#/definitions/github_com_NViktorovich_cryptobackend_pkg_dto.ErrorResponse"
                         }
                     }
                 }
@@ -145,16 +93,16 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "dto.Crypto": {
+        "github_com_NViktorovich_cryptobackend_pkg_dto.Crypto": {
             "type": "object",
             "properties": {
                 "cost": {
                     "type": "number"
                 },
-                "shortTitle": {
+                "short_title": {
                     "type": "string"
                 },
-                "timeStamp": {
+                "time_stamp": {
                     "type": "string"
                 },
                 "title": {
@@ -162,7 +110,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.Error": {
+        "github_com_NViktorovich_cryptobackend_pkg_dto.ErrorResponse": {
             "type": "object",
             "properties": {
                 "message": {
@@ -177,10 +125,10 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0.0",
 	Host:             "localhost:8000",
-	BasePath:         "/crypto/v1/",
+	BasePath:         "/v1/",
 	Schemes:          []string{},
-	Title:            "Simple Crypro API",
-	Description:      "",
+	Title:            "Simple API",
+	Description:      "Simple Crypto API for provided access to information about rate of crypto",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

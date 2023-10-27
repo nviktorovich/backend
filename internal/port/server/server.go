@@ -19,13 +19,8 @@ import (
 )
 
 const (
-	ParamService = "service"
-	BaseURL      = "/crypto/v1"
-
-	methodGetLast = "getLast"
-	methodGetAvg  = "getAvg"
-	methodGetMin  = "getMin"
-	methodGetMax  = "getMax"
+	methodGetCrypto = "/cryptos"
+	specialCrypto   = "/{crypto}"
 )
 
 var (
@@ -61,153 +56,122 @@ func NewServer(service Service) (*Server, error) {
 	return s, nil
 }
 
-func (serv *Server) Run() {
+// @title Simple API
+// @version 1.0.0
+// @description Simple Crypto API for provided access to information about rate of crypto
 
-	serv.router.Use(middleware.Logger)
+// @host localhost:8000
+// @BasePath /v1/
+func (srv *Server) Run() {
 
-	serv.router.Get(methodGetLast, serv.GetLast)
-	serv.router.Get(methodGetAvg, serv.GetLast)
-	serv.router.Get(methodGetMin, serv.GetLast)
-	serv.router.Get(methodGetMax, serv.GetLast)
+	srv.router.Use(middleware.Logger)
 
-	http.ListenAndServe(":8000", serv.router)
+	srv.router.Get(methodGetCrypto, srv.GetAll)
+	srv.router.Get(methodGetCrypto+specialCrypto, srv.GetSpecial)
+
+	http.ListenAndServe(":8000", srv.router)
 }
 
-// @Summary      last rates known cryptos
-// @Description  last rates known cryptos
+// @Summary      all cryptos
+// @Description  get data about all known cryptos frob db
 // @Tags         crypto
 // @Accept       json
 // @Produce      json
 // @Success      200  {array} dto.Crypto
-// @Failure      500  {object} dto.Error
-// @Router       /getLast [get]
-func (serv *Server) GetLast(rw http.ResponseWriter, req *http.Request) {
-	ctx, span := serv.tracer.Start(req.Context(), serv.logger.Name())
-	res, err := serv.service.GetLastCrypto(ctx)
+// @Failure      500  {object} dto.ErrorResponse
+// @Router       /cryptos [get]
+func (srv *Server) GetAll(rw http.ResponseWriter, req *http.Request) {
+	ctx, span := srv.tracer.Start(req.Context(), srv.logger.Name())
+	defer span.End()
+
+	res, err := srv.service.GetAll(ctx)
 	if err != nil {
 		span.RecordError(err)
-		serv.sendResponse(rw, http.StatusInternalServerError, err)
+		srv.sendResponse(rw, http.StatusInternalServerError, err)
 	}
-	dtoRes := serv.ConvertCryptoToDtoCrypto(res)
-	serv.makeSuccessGetResponse(rw, dtoRes)
+
+	dtoList := make([]*dto.Crypto, 0, len(res))
+	for _, crypto := range res {
+		dtoList = append(dtoList, srv.convertCryptoToDto(crypto))
+	}
+
+	srv.makeSuccessGetResponse(rw, dtoList)
 }
 
-// @Summary      avg rates known cryptos
-// @Description  avg rates known cryptos
+// @Summary      special crypto
+// @Description  get data about special crypto from db
 // @Tags         crypto
 // @Accept       json
 // @Produce      json
-// @Success      200  {array} dto.Crypto
-// @Failure      500  {object} dto.Error
-// @Router       /getAvg [get]
-func (serv *Server) GetAvg(rw http.ResponseWriter, req *http.Request) {
-	ctx, span := serv.tracer.Start(req.Context(), serv.logger.Name())
-	res, err := serv.service.GetAvgCrypto(ctx)
-	if err != nil {
+// @Param        title path string true "crypto title"
+// @Success      200  {object} dto.Crypto
+// @Failure 	404 {object} dto.ErrorResponse
+// @Failure      500  {object} dto.ErrorResponse
+// @Router       /cryptos/{title} [get]
+func (srv *Server) GetSpecial(rw http.ResponseWriter, req *http.Request) {
+	ctx, span := srv.tracer.Start(req.Context(), srv.logger.Name())
+	defer span.End()
+
+	title := chi.URLParam(req, "title")
+	if !srv.validateTitle(title) {
+		err := errors.Wrapf(entities.ErrBadRequest, "validate title from url failed: %s", title)
 		span.RecordError(err)
-		serv.sendResponse(rw, http.StatusInternalServerError, err)
+		srv.makeErrorResponse(rw, http.StatusBadRequest, err)
 	}
-	dtoRes := serv.ConvertCryptoToDtoCrypto(res)
-	serv.makeSuccessGetResponse(rw, dtoRes)
+
+	res, err := srv.service.GetSpecial(ctx, title)
+	if err != nil {
+		err = errors.Wrapf(entities.ErrInternal, "get special title of crypto failed: %v", err)
+		span.RecordError(err)
+		srv.makeErrorResponse(rw, http.StatusInternalServerError, err)
+	}
+
+	srv.sendResponse(rw, http.StatusOK, res)
+
 }
 
-// @Summary      min rates known cryptos
-// @Description  min rates known cryptos
-// @Tags         crypto
-// @Accept       json
-// @Produce      json
-// @Success      200  {array} dto.Crypto
-// @Failure      500  {object} dto.Error
-// @Router       /getMin [get]
-func (serv *Server) GetMin(rw http.ResponseWriter, req *http.Request) {
-	ctx, span := serv.tracer.Start(req.Context(), serv.logger.Name())
-	res, err := serv.service.GetMinCrypto(ctx)
-	if err != nil {
-		span.RecordError(err)
-		serv.sendResponse(rw, http.StatusInternalServerError, err)
-	}
-	dtoRes := serv.ConvertCryptoToDtoCrypto(res)
-	serv.makeSuccessGetResponse(rw, dtoRes)
-}
-
-// @Summary      max rates known cryptos
-// @Description  max rates known cryptos
-// @Tags         crypto
-// @Accept       json
-// @Produce      json
-// @Success      200  {array} dto.Crypto
-// @Failure      500  {object} dto.Error
-// @Router       /getMax [get]
-func (serv *Server) GetMax(rw http.ResponseWriter, req *http.Request) {
-	ctx, span := serv.tracer.Start(req.Context(), serv.logger.Name())
-	res, err := serv.service.GetMaxCrypto(ctx)
-	if err != nil {
-		span.RecordError(err)
-		serv.sendResponse(rw, http.StatusInternalServerError, err)
-	}
-	dtoRes := serv.ConvertCryptoToDtoCrypto(res)
-	serv.makeSuccessGetResponse(rw, dtoRes)
-}
-
-func (serv *Server) sendResponse(rw http.ResponseWriter, statusCode int, obj interface{}) {
+func (srv *Server) sendResponse(rw http.ResponseWriter, statusCode int, obj interface{}) {
 	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 	rw.WriteHeader(statusCode)
 	if err := json.NewEncoder(rw).Encode(obj); err != nil {
-		serv.logger.Error(err.Error())
+		srv.logger.Error(err.Error())
 	}
 }
 
-func (serv *Server) handleError(rw http.ResponseWriter, err error) {
-	serv.makeErrorResponse(rw, http.StatusInternalServerError, err)
+func (srv *Server) handleError(rw http.ResponseWriter, err error) {
+	srv.makeErrorResponse(rw, http.StatusInternalServerError, err)
 }
 
-func (serv *Server) makeErrorResponse(rw http.ResponseWriter, statusCode int, err error) {
-	serv.sendResponse(rw, statusCode,
+func (srv *Server) makeErrorResponse(rw http.ResponseWriter, statusCode int, err error) {
+	srv.sendResponse(rw, statusCode,
 		dto.ErrorResponse{
-			Error: dto.Error{
-				Message: err.Error(),
-			},
+			Message: err.Error(),
 		},
 	)
 }
 
-func (serv *Server) makeSuccessGetResponse(rw http.ResponseWriter, data []dto.Crypto) {
-	serv.sendResponse(rw, http.StatusOK, data)
+func (srv *Server) makeSuccessGetResponse(rw http.ResponseWriter, data []*dto.Crypto) {
+	srv.sendResponse(rw, http.StatusOK, data)
 }
 
-func (serv *Server) ConvertCryptoToDtoCrypto(in []entities.Crypto) []dto.Crypto {
-	dtoCrytoList := make([]dto.Crypto, 0, len(in))
-	for _, crypto := range in {
-		dtoCrytoList = append(dtoCrytoList, dto.Crypto{
-			Title:      crypto.Title,
-			ShortTitle: crypto.ShortTitle,
-			Cost:       crypto.Cost,
-			TimeStamp:  crypto.TimeStamp.String(),
-		})
+func (srv *Server) convertCryptoToDto(e *entities.Crypto) *dto.Crypto {
+	return &dto.Crypto{
+		Title:      e.Title,
+		ShortTitle: e.ShortTitle,
+		Cost:       e.Cost,
+		Created:    e.Created.Format(time.RFC3339),
 	}
-	return dtoCrytoList
 }
 
-func (serv *Server) ConvertDtoCryptoToCrypto(in []dto.Crypto) ([]entities.Crypto, error) {
-	cryptoList := make([]entities.Crypto, 0, len(in))
-	errList := make([]string, 0)
-	for _, crypto := range in {
-		t, err := time.Parse(time.RFC3339, crypto.TimeStamp)
-		if err != nil {
-			errList = append(errList, err.Error())
-			continue
-		}
-
-		cryptoList = append(cryptoList, entities.Crypto{
-			Title:      crypto.Title,
-			ShortTitle: crypto.ShortTitle,
-			Cost:       crypto.Cost,
-			TimeStamp:  t,
-		})
+func (srv *Server) validateTitle(title string) bool {
+	switch {
+	case strings.TrimSpace(title) == "":
+		return false
+	case len([]rune(title)) < 3:
+		return false
+	case len([]rune(title)) > 255:
+		return false
+	default:
+		return true
 	}
-	if len(errList) > 0 {
-		err := errors.Wrapf(entities.ErrInvalidParam, "convert data to time failed: %v", strings.Join(errList, ", "))
-		return cryptoList, err
-	}
-	return cryptoList, nil
 }

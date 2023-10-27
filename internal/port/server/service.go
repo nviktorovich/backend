@@ -7,8 +7,6 @@ import (
 )
 
 type Service interface {
-	GetLastCrypto(ctx context.Context) ([]entities.Crypto, error)
-	GetAvgCrypto(ctx context.Context) ([]entities.Crypto, error)
-	GetMinCrypto(ctx context.Context) ([]entities.Crypto, error)
-	GetMaxCrypto(ctx context.Context) ([]entities.Crypto, error)
+	GetAll(ctx context.Context) ([]*entities.Crypto, error)
+	GetSpecial(ctx context.Context, title string) (*entities.Crypto, error)
 }

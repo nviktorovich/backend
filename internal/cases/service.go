@@ -2,18 +2,19 @@ package cases
 
 import (
 	"context"
-
+	"fmt"
 	"github.com/NViktorovich/cryptobackend/internal/entities"
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
+	"strings"
 )
 
 type Service struct {
 	storage Storage
 	client  Client
-	logger  zap.Logger
+	logger  *zap.Logger
 	tracer  trace.Tracer
 }
 
@@ -40,131 +41,106 @@ func NewService(s Storage, c Client) (*Service, error) {
 	service := &Service{
 		storage: s,
 		client:  c,
-		logger:  *lg,
+		logger:  lg,
 		tracer:  tr,
 	}
 	return service, nil
 }
 
-func (srv *Service) UpdateBase(ctx context.Context) error {
-	ctx, span := srv.tracer.Start(ctx, srv.logger.Name())
+func (s *Service) WriteToStorage(ctx context.Context) error {
+	ctx, span := s.tracer.Start(ctx, "service: write to storage")
 	defer span.End()
 
-	titles, err := srv.storage.GetList(ctx)
+	list, err := s.storage.GetList(ctx)
 	if err != nil {
-		err = errors.Wrapf(entities.ErrInternal, "getting name-list failed: %v", err)
-		span.RecordError(err)
+		err = errors.Wrapf(entities.ErrInternal, "get list failed: %v", err)
+		s.logger.Error(err.Error())
 		return err
 	}
 
-	cryptos, err := srv.client.GetCurrentRate(ctx, titles)
+	currentRates, err := s.client.GetCurrentRate(ctx, list)
 	if err != nil {
-		err = errors.Wrapf(entities.ErrInternal, "getting current rates failed: %v", err)
-		span.RecordError(err)
+		err = errors.Wrapf(entities.ErrInternal, "get current rates failed: %v", err)
+		s.logger.Error(err.Error())
 		return err
 	}
 
-	if err = srv.storage.Write(ctx, cryptos); err != nil {
-		err = errors.Wrapf(entities.ErrInternal, "saving current rates to storage failed: %v", err)
-		span.RecordError(err)
-		return err
-	}
-
-	return nil
-}
-
-func (srv *Service) GetLastCrypto(ctx context.Context) ([]entities.Crypto, error) {
-	ctx, span := srv.tracer.Start(ctx, srv.logger.Name())
-	defer span.End()
-
-	titles, err := srv.storage.GetList(ctx)
-	if err != nil {
-		err = errors.Wrapf(entities.ErrInternal, "getting name-list failed: %v", err)
-		span.RecordError(err)
-		return nil, err
-	}
-
-	res, err := srv.storage.ReadLast(ctx, titles)
-	if err != nil {
-		err = errors.Wrapf(entities.ErrInternal, "read failed: %v", err)
-		span.RecordError(err)
-		return nil, err
-	}
-
-	return res, nil
-}
-
-func (srv *Service) GetAvgCrypto(ctx context.Context) ([]entities.Crypto, error) {
-	ctx, span := srv.tracer.Start(ctx, srv.logger.Name())
-	defer span.End()
-
-	titles, err := srv.storage.GetList(ctx)
-	if err != nil {
-		err = errors.Wrapf(entities.ErrInternal, "getting name-list failed: %v", err)
-		span.RecordError(err)
-		return nil, err
-	}
-
-	res, err := srv.storage.ReadAvg(ctx, titles)
-	if err != nil {
-		err = errors.Wrapf(entities.ErrInternal, "read failed: %v", err)
-		span.RecordError(err)
-		return nil, err
-	}
-
-	return res, nil
-}
-
-func (srv *Service) GetMinCrypto(ctx context.Context) ([]entities.Crypto, error) {
-	ctx, span := srv.tracer.Start(ctx, srv.logger.Name())
-	defer span.End()
-
-	titles, err := srv.storage.GetList(ctx)
-	if err != nil {
-		err = errors.Wrapf(entities.ErrInternal, "getting name-list failed: %v", err)
-		span.RecordError(err)
-		return nil, err
-	}
-
-	res, err := srv.storage.ReadMin(ctx, titles)
-	if err != nil {
-		err = errors.Wrapf(entities.ErrInternal, "read failed: %v", err)
-		span.RecordError(err)
-		return nil, err
-	}
-
-	return res, nil
-}
-
-func (srv *Service) GetMaxCrypto(ctx context.Context) ([]entities.Crypto, error) {
-	ctx, span := srv.tracer.Start(ctx, srv.logger.Name())
-	defer span.End()
-
-	titles, err := srv.storage.GetList(ctx)
-	if err != nil {
-		err = errors.Wrapf(entities.ErrInternal, "getting name-list failed: %v", err)
-		span.RecordError(err)
-		return nil, err
-	}
-
-	res, err := srv.storage.ReadMax(ctx, titles)
-	if err != nil {
-		err = errors.Wrapf(entities.ErrInternal, "read failed: %v", err)
-		span.RecordError(err)
-		return nil, err
-	}
-
-	return res, nil
-}
-
-func (srv *Service) UpdateCryptoList(ctx context.Context, title string) error {
-	ctx, span := srv.tracer.Start(ctx, srv.logger.Name())
-	defer span.End()
-
-	if err := srv.storage.UpdateList(ctx, title); err != nil {
-		err = errors.Wrapf(entities.ErrInternal, "update list of crypto titles failed: %v", err)
-		span.RecordError(err)
+	if err = s.storage.Write(ctx, currentRates); err != nil {
+		err = errors.Wrapf(entities.ErrInternal, "write current rates to the storage failed: %v", err)
+		s.logger.Error(err.Error())
 		return err
 	}
 	return nil
+}
+
+func (s *Service) GetAll(ctx context.Context) ([]*entities.Crypto, error) {
+	ctx, span := s.tracer.Start(ctx, "service: get all known crypto from storage")
+	defer span.End()
+
+	cryptos, err := s.storage.GetAll(ctx)
+	if err != nil {
+		err = errors.Wrapf(entities.ErrInternal, "get all cryptos from storage failed: %v", err)
+		s.logger.Error(err.Error())
+		return nil, err
+	}
+	return cryptos, nil
+}
+
+func (s *Service) GetSpecial(ctx context.Context, title string) (*entities.Crypto, error) {
+	ctx, span := s.tracer.Start(ctx, fmt.Sprintf("service: get special crypto by name: %s", title))
+	defer span.End()
+
+	titleList, err := s.storage.GetList(ctx)
+	if err != nil {
+		err = errors.Wrapf(entities.ErrInternal, "ger list of titles failed: %v", err)
+		span.RecordError(err)
+		return nil, err
+	}
+
+	if s.isExist(title, titleList) {
+		return s.getExistingSpecialCrypto(ctx, title)
+	}
+
+	return s.getMissingSpecialCrypto(ctx, title)
+}
+
+func (s *Service) getExistingSpecialCrypto(ctx context.Context, title string) (*entities.Crypto, error) {
+	ctx, span := s.tracer.Start(ctx, fmt.Sprintf("service: get crypto from storage by name: %s", title))
+	defer span.End()
+
+	crypto, err := s.storage.GetByTitle(ctx, title)
+	if err != nil {
+		err = errors.Wrapf(entities.ErrInternal, "get crypto from storage by name: %s failed: %v", title, err)
+		s.logger.Error(err.Error())
+		return nil, err
+	}
+	return crypto, nil
+}
+
+func (s *Service) getMissingSpecialCrypto(ctx context.Context, title string) (*entities.Crypto, error) {
+	ctx, span := s.tracer.Start(ctx, fmt.Sprintf("service: get crypto from storage by name: %s", title))
+	defer span.End()
+
+	crypto, err := s.client.GetSpecialRate(ctx, title)
+	if err != nil {
+		err = errors.Wrapf(entities.ErrInternal, "get crypto with special title: %s failed: %v", title, err)
+		span.RecordError(err)
+		return nil, err
+	}
+
+	if err = s.storage.Write(ctx, []*entities.Crypto{crypto}); err != nil {
+		err = errors.Wrapf(entities.ErrInternal, "wrati special title: %s to storage failed: %v", title, err)
+		span.RecordError(err)
+		return nil, err
+	}
+	return crypto, nil
+}
+
+func (s *Service) isExist(specialTitle string, titles []string) bool {
+	for _, title := range titles {
+		if strings.EqualFold(specialTitle, title) {
+			return true
+		}
+	}
+	return false
 }
