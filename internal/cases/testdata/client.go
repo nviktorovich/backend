@@ -36,10 +36,10 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 }
 
 // GetCurrentRate mocks base method.
-func (m *MockClient) GetCurrentRate(ctx context.Context, titles []string) ([]entities.Crypto, error) {
+func (m *MockClient) GetCurrentRate(ctx context.Context, titles []string) ([]*entities.Crypto, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCurrentRate", ctx, titles)
-	ret0, _ := ret[0].([]entities.Crypto)
+	ret0, _ := ret[0].([]*entities.Crypto)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -48,4 +48,19 @@ func (m *MockClient) GetCurrentRate(ctx context.Context, titles []string) ([]ent
 func (mr *MockClientMockRecorder) GetCurrentRate(ctx, titles interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentRate", reflect.TypeOf((*MockClient)(nil).GetCurrentRate), ctx, titles)
+}
+
+// GetSpecialRate mocks base method.
+func (m *MockClient) GetSpecialRate(ctx context.Context, title string) (*entities.Crypto, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSpecialRate", ctx, title)
+	ret0, _ := ret[0].(*entities.Crypto)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSpecialRate indicates an expected call of GetSpecialRate.
+func (mr *MockClientMockRecorder) GetSpecialRate(ctx, title interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSpecialRate", reflect.TypeOf((*MockClient)(nil).GetSpecialRate), ctx, title)
 }

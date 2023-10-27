@@ -1,0 +1,77 @@
+basePath: /v1/
+definitions:
+  github_com_NViktorovich_cryptobackend_pkg_dto.Crypto:
+    properties:
+      cost:
+        type: number
+      short_title:
+        type: string
+      time_stamp:
+        type: string
+      title:
+        type: string
+    type: object
+  github_com_NViktorovich_cryptobackend_pkg_dto.ErrorResponse:
+    properties:
+      message:
+        type: string
+    type: object
+host: localhost:8000
+info:
+  contact: {}
+  description: Simple Crypto API for provided access to information about rate of
+    crypto
+  title: Simple API
+  version: 1.0.0
+paths:
+  /cryptos:
+    get:
+      consumes:
+      - application/json
+      description: get data about all known cryptos frob db
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_NViktorovich_cryptobackend_pkg_dto.Crypto'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_NViktorovich_cryptobackend_pkg_dto.ErrorResponse'
+      summary: all cryptos
+      tags:
+      - crypto
+  /cryptos/{title}:
+    get:
+      consumes:
+      - application/json
+      description: get data about special crypto from db
+      parameters:
+      - description: crypto title
+        in: path
+        name: title
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_NViktorovich_cryptobackend_pkg_dto.Crypto'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_NViktorovich_cryptobackend_pkg_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_NViktorovich_cryptobackend_pkg_dto.ErrorResponse'
+      summary: special crypto
+      tags:
+      - crypto
+swagger: "2.0"

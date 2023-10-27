@@ -35,6 +35,36 @@ func (m *MockStorage) EXPECT() *MockStorageMockRecorder {
 	return m.recorder
 }
 
+// GetAll mocks base method.
+func (m *MockStorage) GetAll(ctx context.Context) ([]*entities.Crypto, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAll", ctx)
+	ret0, _ := ret[0].([]*entities.Crypto)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAll indicates an expected call of GetAll.
+func (mr *MockStorageMockRecorder) GetAll(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockStorage)(nil).GetAll), ctx)
+}
+
+// GetByTitle mocks base method.
+func (m *MockStorage) GetByTitle(ctx context.Context, title string) (*entities.Crypto, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByTitle", ctx, title)
+	ret0, _ := ret[0].(*entities.Crypto)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByTitle indicates an expected call of GetByTitle.
+func (mr *MockStorageMockRecorder) GetByTitle(ctx, title interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByTitle", reflect.TypeOf((*MockStorage)(nil).GetByTitle), ctx, title)
+}
+
 // GetList mocks base method.
 func (m *MockStorage) GetList(ctx context.Context) ([]string, error) {
 	m.ctrl.T.Helper()
@@ -48,66 +78,6 @@ func (m *MockStorage) GetList(ctx context.Context) ([]string, error) {
 func (mr *MockStorageMockRecorder) GetList(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetList", reflect.TypeOf((*MockStorage)(nil).GetList), ctx)
-}
-
-// ReadAvg mocks base method.
-func (m *MockStorage) ReadAvg(ctx context.Context, titles []string) ([]entities.Crypto, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReadAvg", ctx, titles)
-	ret0, _ := ret[0].([]entities.Crypto)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ReadAvg indicates an expected call of ReadAvg.
-func (mr *MockStorageMockRecorder) ReadAvg(ctx, titles interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadAvg", reflect.TypeOf((*MockStorage)(nil).ReadAvg), ctx, titles)
-}
-
-// ReadLast mocks base method.
-func (m *MockStorage) ReadLast(ctx context.Context, titles []string) ([]entities.Crypto, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReadLast", ctx, titles)
-	ret0, _ := ret[0].([]entities.Crypto)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ReadLast indicates an expected call of ReadLast.
-func (mr *MockStorageMockRecorder) ReadLast(ctx, titles interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadLast", reflect.TypeOf((*MockStorage)(nil).ReadLast), ctx, titles)
-}
-
-// ReadMax mocks base method.
-func (m *MockStorage) ReadMax(ctx context.Context, titles []string) ([]entities.Crypto, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReadMax", ctx, titles)
-	ret0, _ := ret[0].([]entities.Crypto)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ReadMax indicates an expected call of ReadMax.
-func (mr *MockStorageMockRecorder) ReadMax(ctx, titles interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadMax", reflect.TypeOf((*MockStorage)(nil).ReadMax), ctx, titles)
-}
-
-// ReadMin mocks base method.
-func (m *MockStorage) ReadMin(ctx context.Context, titles []string) ([]entities.Crypto, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReadMin", ctx, titles)
-	ret0, _ := ret[0].([]entities.Crypto)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ReadMin indicates an expected call of ReadMin.
-func (mr *MockStorageMockRecorder) ReadMin(ctx, titles interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadMin", reflect.TypeOf((*MockStorage)(nil).ReadMin), ctx, titles)
 }
 
 // UpdateList mocks base method.
@@ -125,7 +95,7 @@ func (mr *MockStorageMockRecorder) UpdateList(ctx, title interface{}) *gomock.Ca
 }
 
 // Write mocks base method.
-func (m *MockStorage) Write(ctx context.Context, cryptos []entities.Crypto) error {
+func (m *MockStorage) Write(ctx context.Context, cryptos []*entities.Crypto) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Write", ctx, cryptos)
 	ret0, _ := ret[0].(error)
