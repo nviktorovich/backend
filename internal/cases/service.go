@@ -121,19 +121,19 @@ func (s *Service) getMissingSpecialCrypto(ctx context.Context, title string) (*e
 	ctx, span := s.tracer.Start(ctx, fmt.Sprintf("service: get crypto from storage by name: %s", title))
 	defer span.End()
 
-	crypto, err := s.client.GetSpecialRate(ctx, title)
+	crypto, err := s.client.GetCurrentRate(ctx, []string{title})
 	if err != nil {
 		err = errors.Wrapf(entities.ErrInternal, "get crypto with special title: %s failed: %v", title, err)
 		span.RecordError(err)
 		return nil, err
 	}
 
-	if err = s.storage.Write(ctx, []*entities.Crypto{crypto}); err != nil {
+	if err = s.storage.Write(ctx, []*entities.Crypto{crypto[0]}); err != nil {
 		err = errors.Wrapf(entities.ErrInternal, "wrati special title: %s to storage failed: %v", title, err)
 		span.RecordError(err)
 		return nil, err
 	}
-	return crypto, nil
+	return crypto[0], nil
 }
 
 func (s *Service) isExist(specialTitle string, titles []string) bool {

@@ -26,6 +26,8 @@ shell-db:
 	docker compose -f ${DOCKER_COMPOSE_FILE} exec db psql -U postgres -d postgres
 
 # migrate -path deployment/migrations -database "postgres://postgres:postgres@localhost:5432/links_dev?sslmode=disable" up
+swagger-port: ## renew swagger spec
+	swag init -g internal/port/server/server.go -o internal/port/server/swagger/docs/ --md swagger/markdown --parseDependency true
 
 
 # migrate -path deployment/migrations -database "postgres://postgres:postgres@localhost:5432/links_dev?sslmode=disable" up

@@ -24,7 +24,7 @@ type PGStorage struct {
 
 func NewPostgresStorage(cfg string) (*PGStorage, error) {
 	pool, err := pgxpool.New(context.Background(), cfg)
-	defer pool.Close()
+	//defer pool.Close()
 
 	if err != nil {
 		return nil, errors.Wrapf(entities.ErrInternal, "creating pgx pool failed: %v", err)
@@ -82,11 +82,17 @@ func (s *PGStorage) GetAll(ctx context.Context) ([]*entities.Crypto, error) {
 	dtoList := make([]*dto.Crypto, 0)
 	for rows.Next() {
 		var dto dto.Crypto
-		if err = rows.Scan(&dto); err != nil {
+		var title string
+		var cost float64
+		var created time.Time
+		if err = rows.Scan(&title, &cost, &created); err != nil {
 			err = errors.Wrapf(entities.ErrInternal, "scaning failed: %v", err)
 			span.RecordError(err)
 			return nil, err
 		}
+		dto.ShortTitle = title
+		dto.Cost = cost
+		dto.Created = created.Format(time.RFC3339)
 		dtoList = append(dtoList, &dto)
 	}
 	errList := make([]string, 0)
@@ -112,12 +118,15 @@ func (s *PGStorage) GetByTitle(ctx context.Context, title string) (*entities.Cry
 	defer span.End()
 
 	parameters := []interface{}{title}
-	query := `SELECT title, short_title, cost, created FROM 
-                                             crypto_box WHERE short_title = $1 AND 
-                                            created in (SELECT max(created) FROM crypto_box GROUP BY short_title)`
+	query := `SELECT short_title, cost, created FROM 
+            crypto_box WHERE short_title = $1 AND created in 
+            (SELECT max(created) FROM crypto_box GROUP BY short_title)`
 	var dto = new(dto.Crypto)
 	row := s.db.QueryRow(ctx, query, parameters...)
-	err := row.Scan(&dto)
+	var shortTitle string
+	var cost float64
+	var created time.Time
+	err := row.Scan(&shortTitle, &cost, &created)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = errors.Wrapf(entities.ErrNotFound, "search by title: %s has not result", title)
@@ -128,6 +137,10 @@ func (s *PGStorage) GetByTitle(ctx context.Context, title string) (*entities.Cry
 		span.RecordError(err)
 		return nil, err
 	}
+	dto.ShortTitle = shortTitle
+	dto.Cost = cost
+	dto.Created = created.Format(time.RFC3339)
+
 	crypto, err := s.FromDtoToCrypto(dto)
 	if err != nil {
 		err = errors.Wrapf(entities.ErrInternal, "convert from dto to crypto failed: %v", err)
@@ -181,7 +194,7 @@ func (s *PGStorage) GetList(ctx context.Context) ([]string, error) {
 
 	for rows.Next() {
 		var title string
-		err = rows.Scan(&titles)
+		err = rows.Scan(&title)
 		if err != nil {
 			err = errors.Wrap(entities.ErrInternal, "scanning failed")
 			span.RecordError(err)

@@ -1,3 +1,7 @@
 package main
 
-func main() {}
+import "github.com/NViktorovich/cryptobackend/application"
+
+func main() {
+	application.Run()
+}
