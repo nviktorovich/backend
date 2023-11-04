@@ -19,8 +19,9 @@ import (
 )
 
 const (
+	basePath        = "/v1"
 	methodGetCrypto = "/cryptos"
-	specialCrypto   = "/{crypto}"
+	specialCrypto   = methodGetCrypto + "/{crypto}"
 )
 
 var (
@@ -34,14 +35,14 @@ type Server struct {
 	tracer  trace.Tracer
 }
 
-func NewServer(service Service) (*Server, error) {
+func NewServer(service *Service) (*Server, error) {
 	if service == nil {
-		return nil, errors.Wrap(entities.ErrInternal, "server creation failed: service is nil")
+		return nil, errors.Wrap(ErrServiceNotSet, "server creation failed: service is nil")
 	}
 
 	lg, err := zap.NewProduction()
 	if err != nil {
-		err = errors.Wrapf(entities.ErrInternal, "server creation failed: creating logger: %v", err)
+		err = errors.Wrapf(ErrServiceNotSet, "server creation failed: creating logger: %v", err)
 		return nil, err
 	}
 
@@ -49,7 +50,7 @@ func NewServer(service Service) (*Server, error) {
 
 	s := &Server{
 		router:  chi.NewRouter(),
-		service: service,
+		service: *service,
 		logger:  lg,
 		tracer:  tr,
 	}
@@ -61,13 +62,13 @@ func NewServer(service Service) (*Server, error) {
 // @description Simple Crypto API for provided access to information about rate of crypto
 
 // @host localhost:8000
-// @BasePath /v1/
+// @BasePath /v1
 func (srv *Server) Run() {
 
 	srv.router.Use(middleware.Logger)
 
-	srv.router.Get(methodGetCrypto, srv.GetAll)
-	srv.router.Get(methodGetCrypto+specialCrypto, srv.GetSpecial)
+	srv.router.Get(basePath+methodGetCrypto, srv.GetAll)
+	srv.router.Get(basePath+specialCrypto, srv.GetSpecial)
 
 	http.ListenAndServe(":8000", srv.router)
 }
@@ -112,7 +113,7 @@ func (srv *Server) GetSpecial(rw http.ResponseWriter, req *http.Request) {
 	ctx, span := srv.tracer.Start(req.Context(), srv.logger.Name())
 	defer span.End()
 
-	title := chi.URLParam(req, "title")
+	title := chi.URLParam(req, "crypto")
 	if !srv.validateTitle(title) {
 		err := errors.Wrapf(entities.ErrBadRequest, "validate title from url failed: %s", title)
 		span.RecordError(err)

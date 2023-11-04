@@ -7,7 +7,7 @@
         "version": "1.0.0"
     },
     "host": "localhost:8000",
-    "basePath": "/v1/",
+    "basePath": "/v1",
     "paths": {
         "/cryptos": {
             "get": {
@@ -93,10 +93,10 @@
                 "cost": {
                     "type": "number"
                 },
-                "short_title": {
+                "created": {
                     "type": "string"
                 },
-                "time_stamp": {
+                "short_title": {
                     "type": "string"
                 },
                 "title": {

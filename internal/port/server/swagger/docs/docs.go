@@ -99,10 +99,10 @@ const docTemplate = `{
                 "cost": {
                     "type": "number"
                 },
-                "short_title": {
+                "created": {
                     "type": "string"
                 },
-                "time_stamp": {
+                "short_title": {
                     "type": "string"
                 },
                 "title": {
@@ -125,7 +125,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0.0",
 	Host:             "localhost:8000",
-	BasePath:         "/v1/",
+	BasePath:         "/v1",
 	Schemes:          []string{},
 	Title:            "Simple API",
 	Description:      "Simple Crypto API for provided access to information about rate of crypto",

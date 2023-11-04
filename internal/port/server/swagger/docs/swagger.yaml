@@ -1,12 +1,12 @@
-basePath: /v1/
+basePath: /v1
 definitions:
   github_com_NViktorovich_cryptobackend_pkg_dto.Crypto:
     properties:
       cost:
         type: number
-      short_title:
+      created:
         type: string
-      time_stamp:
+      short_title:
         type: string
       title:
         type: string
