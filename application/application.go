@@ -14,8 +14,7 @@ import (
 )
 
 func Run() {
-	var CryptoCompareClient client.Scouter
-	CryptoCompareClient = &cryptocompare.CryptoCompare{}
+	var CryptoCompareClient client.Scouter = &cryptocompare.CryptoCompare{}
 
 	var Client cases.Client
 	Client, err := client.NewClientService(CryptoCompareClient)
@@ -38,8 +37,7 @@ func Run() {
 	var Service server.Service
 	Service, err = cases.NewService(Postgres, Client)
 	ctx := context.Background()
-	var updatingPeriod time.Duration
-	updatingPeriod = 300
+	var updatingPeriod time.Duration = 300
 	go func() {
 		ticker := time.NewTicker(updatingPeriod * time.Second)
 		for {
